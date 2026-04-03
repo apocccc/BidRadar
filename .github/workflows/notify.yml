@@ -2,9 +2,12 @@ name: BidRadar通知
 
 on:
   schedule:
-    - cron: '0 21 * * *'   # 毎日6時JST (UTC+9なのでUTC21時)
+    - cron: '0 21 * * *'   # 毎日6時JST
     - cron: '0 9 * * *'    # 毎日18時JST
-  workflow_dispatch:         # 手動実行ボタンも追加
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   notify:
@@ -20,15 +23,16 @@ jobs:
         working-directory: backend
         run: npm ci
 
-      - name: キャッシュ復元（スナップショット）
-        uses: actions/cache@v4
-        with:
-          path: backend/data/snapshots.json
-          key: snapshots-${{ github.run_id }}
-          restore-keys: snapshots-
-
       - name: 通知実行
         working-directory: backend
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: npx tsx src/notify-job.ts
+
+      - name: スナップショットをコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add backend/data/snapshots.json
+          git diff --cached --quiet || git commit -m "chore: update snapshots [skip ci]"
+          git push
