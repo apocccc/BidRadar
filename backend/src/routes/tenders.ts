@@ -29,6 +29,18 @@ function extractBidDate(text: string): string {
   return '';
 }
 
+function docLabel(url: string): string {
+  const u = url.toLowerCase();
+  if (/shiyousho|仕様書|spec/.test(u)) return '仕様書';
+  if (/nyusatsu|入札説明/.test(u)) return '入札説明書';
+  if (/keiyaku|契約/.test(u)) return '契約書';
+  if (/koukoku|公告/.test(u)) return '公告';
+  if (/youkou|要項/.test(u)) return '要項';
+  if (/p-portal\.go\.jp/.test(u)) return '調達ポータル';
+  const ext = url.split('.').pop()?.toUpperCase();
+  return ext && ['PDF','DOC','DOCX','XLS','XLSX'].includes(ext) ? ext : '書類';
+}
+
 function parseXmlTenders(xml: string) {
   const results: object[] = [];
   const hits = xml.match(/<SearchHits>(\d+)<\/SearchHits>/)?.[1] ?? '0';
@@ -37,10 +49,15 @@ function parseXmlTenders(xml: string) {
   for (const item of items) {
     const get = (tag: string) =>
       item.match(new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?<\\/${tag}>`, 's'))?.[1]?.trim() ?? '';
+    const getAll = (tag: string) =>
+      [...item.matchAll(new RegExp(`<${tag}>(?:<!\\[CDATA\\[)?(.*?)(?:\\]\\]>)?<\\/${tag}>`, 'gs'))]
+        .map(m => m[1]?.trim() ?? '').filter(Boolean);
 
     const name = get('ProjectName');
     const description = get('ProjectDescription');
     const bidDate = extractBidDate(name + ' ' + description);
+    const allUrls = getAll('ExternalDocumentURI');
+    const docs = allUrls.map(url => ({ url, label: docLabel(url) }));
 
     results.push({
       id: get('Key'),
@@ -51,7 +68,8 @@ function parseXmlTenders(xml: string) {
       category: get('Category'),
       publishedAt: get('CftIssueDate'),
       updatedAt: get('Date'),
-      url: get('ExternalDocumentURI'),
+      url: allUrls[0] ?? '',
+      docs,
       description: description.slice(0, 600),
       bidDate,
     });

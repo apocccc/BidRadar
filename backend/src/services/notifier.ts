@@ -7,6 +7,18 @@ import { getSlackWebhookUrl } from './settingsService';
 const KKJ_API = 'https://www.kkj.go.jp/api/';
 const SNAPSHOT_FILE = path.join(__dirname, '../../data/snapshots.json');
 
+function docLabel(url: string): string {
+  const u = url.toLowerCase();
+  if (/shiyousho|仕様書|spec/.test(u)) return '仕様書';
+  if (/nyusatsu|入札説明/.test(u)) return '入札説明書';
+  if (/keiyaku|契約/.test(u)) return '契約書';
+  if (/koukoku|公告/.test(u)) return '公告';
+  if (/youkou|要項/.test(u)) return '要項';
+  if (/p-portal\.go\.jp/.test(u)) return '調達ポータル';
+  const ext = url.split('.').pop()?.toUpperCase();
+  return ext && ['PDF','DOC','DOCX','XLS','XLSX'].includes(ext) ? ext : '書類';
+}
+
 // 前回通知時のIDスナップショットを読み書き
 function loadSnapshots(): Record<string, string[]> {
   try { return JSON.parse(fs.readFileSync(SNAPSHOT_FILE, 'utf-8')) as Record<string, string[]>; }
@@ -186,15 +198,8 @@ async function runNotifications() {
       const lines = newTenders.map(t => {
         const loc = t.prefecture ? ` / ${t.prefecture}` : '';
         const bid = t.bidDate ? `｜入札日 ${t.bidDate.slice(5, 10).replace('-', '/')}` : '';
-        const docs = t.docUrls.map(u => {
-          const ext = u.split('.').pop()?.toUpperCase() ?? 'ファイル';
-          const label = /siy(o|ō)usyo|仕様書/i.test(u) ? '仕様書' : ext;
-          return `<${u}|${label}>`;
-        });
-        if (docs.length === 0 && t.url) {
-          const label = t.url.includes('p-portal.go.jp') ? '調達ポータルで確認' : '公告を開く';
-          docs.push(`<${t.url}|${label}>`);
-        }
+        const docs = t.docUrls.map(u => `<${u}|${docLabel(u)}>`);
+        if (docs.length === 0 && t.url) docs.push(`<${t.url}|${docLabel(t.url)}>`);
         const docsLine = docs.length > 0 ? `\n  📎 ${docs.join('　')}` : '';
         const caseNumberLine = t.caseNumber ? `\n  \`${t.caseNumber}\`` : '';
         return `• *${t.name}*\n  ${t.organization}${loc}${bid}${caseNumberLine}${docsLine}`;

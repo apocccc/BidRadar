@@ -2,6 +2,8 @@ import { useState } from 'react'
 import AlertsPage from './AlertsPage'
 import PrefectureMultiSelect, { PREFECTURES } from './PrefectureMultiSelect'
 
+type TenderDoc = { url: string; label: string };
+
 type Tender = {
   id: string;
   name: string;
@@ -11,6 +13,7 @@ type Tender = {
   publishedAt: string;
   updatedAt: string;
   url: string;
+  docs?: TenderDoc[];
   description: string;
   bidDate: string;
   category: string;
@@ -80,6 +83,16 @@ function TenderCard({ tender, isFav, onToggleFav }: { tender: Tender; isFav: boo
               </div>
               {tender.description && (
                 <p className="text-xs text-gray-500 mt-2 leading-relaxed line-clamp-2">{tender.description}</p>
+              )}
+              {tender.docs && tender.docs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {tender.docs.map((doc, i) => (
+                    <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-blue-50 text-blue-600 hover:bg-blue-100 transition border border-blue-100">
+                      📄 {doc.label}
+                    </a>
+                  ))}
+                </div>
               )}
             </div>
             <div className="flex-shrink-0 flex flex-col gap-1.5">
