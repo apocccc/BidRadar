@@ -66,7 +66,14 @@ type TenderItem = {
   lgCode: string;
   publishedAt: string;
   bidDate: string;
+  description: string;
 };
+
+function passesQualFilter(t: TenderItem): boolean {
+  const text = t.name + ' ' + t.description;
+  if (!/全省庁統一資格/.test(text)) return true;
+  return /又は[ＤD]|[ＤD](?:の)?等級|[ＤD]等に/.test(text);
+}
 
 async function fetchTendersForPref(query: string, prefCode: string, category: string): Promise<TenderItem[]> {
   const params = new URLSearchParams();
@@ -113,6 +120,7 @@ async function fetchTendersForPref(query: string, prefCode: string, category: st
       lgCode,
       publishedAt: get('CftIssueDate'),
       bidDate: extractBidDate(name + ' ' + description),
+      description,
     });
   }
 
@@ -141,6 +149,7 @@ async function searchTenders(query: string, prefecture: string, category: string
   return deduped.filter(t => {
     if (prefCodes.length > 0 && t.lgCode && !prefCodes.some(code => t.lgCode.startsWith(code))) return false;
     if (t.bidDate && t.bidDate < today) return false;
+    if (!passesQualFilter(t)) return false;
     return true;
   });
 }
