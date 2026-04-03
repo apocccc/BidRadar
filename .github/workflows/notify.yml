@@ -1,0 +1,34 @@
+name: BidRadar通知
+
+on:
+  schedule:
+    - cron: '0 21 * * *'   # 毎日6時JST (UTC+9なのでUTC21時)
+    - cron: '0 9 * * *'    # 毎日18時JST
+  workflow_dispatch:         # 手動実行ボタンも追加
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: キャッシュ復元（スナップショット）
+        uses: actions/cache@v4
+        with:
+          path: backend/data/snapshots.json
+          key: snapshots-${{ github.run_id }}
+          restore-keys: snapshots-
+
+      - name: 通知実行
+        working-directory: backend
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: npx tsx src/notify-job.ts
