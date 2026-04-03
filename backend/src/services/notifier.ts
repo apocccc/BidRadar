@@ -135,16 +135,23 @@ async function searchTenders(query: string, prefecture: string, category: string
 
 async function sendSlack(text: string) {
   const webhookUrl = getSlackWebhookUrl();
+  console.log(`[slack] URL設定: ${webhookUrl ? `あり(${webhookUrl.length}文字)` : 'なし'}`);
   if (!webhookUrl) { console.warn('[notifier] Slack Webhook URL が未設定'); return; }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10000);
-  await fetch(webhookUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text }),
-    signal: controller.signal,
-  });
-  clearTimeout(timer);
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      signal: controller.signal,
+    });
+    console.log(`[slack] レスポンス: ${res.status}`);
+  } catch (e) {
+    console.error('[slack] 送信エラー:', e);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function runNotifications() {
