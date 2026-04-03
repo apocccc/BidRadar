@@ -1,11 +1,29 @@
 [
   {
-    "label": "マーケティング",
-    "query": "マーケティング",
-    "prefecture": "13",
-    "category": "",
+    "label": "関東のSNS",
+    "query": "SNS",
+    "prefecture": "08,09,10,11,12,13,14",
+    "category": "役務",
     "enabled": true,
-    "id": "1774847508618",
-    "createdAt": "2026-03-30T05:11:48.618Z"
+    "id": "1775200871116",
+    "createdAt": "2026-04-03T07:21:11.116Z"
+  },
+  {
+    "label": "関東の広報",
+    "query": "広報",
+    "prefecture": "08,09,10,11,12,13,14",
+    "category": "役務",
+    "enabled": true,
+    "id": "1775200895067",
+    "createdAt": "2026-04-03T07:21:35.067Z"
+  },
+  {
+    "label": "関東の広告",
+    "query": "広告",
+    "prefecture": "08,09,10,11,12,13,14",
+    "category": "役務",
+    "enabled": true,
+    "id": "1775200949790",
+    "createdAt": "2026-04-03T07:22:29.790Z"
   }
 ]
