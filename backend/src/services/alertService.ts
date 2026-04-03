@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 
 export type Alert = {
   id: string;
@@ -27,6 +28,15 @@ export function getAlerts(): Alert[] {
 export function saveAlerts(alerts: Alert[]) {
   ensureFile();
   fs.writeFileSync(DATA_FILE, JSON.stringify(alerts, null, 2));
+  try {
+    const repoRoot = path.join(__dirname, '../../../..');
+    execSync('git add backend/data/alerts.json', { cwd: repoRoot });
+    execSync('git diff --cached --quiet || git commit -m "chore: update alerts [skip ci]"', { cwd: repoRoot, shell: '/bin/sh' });
+    execSync('git push', { cwd: repoRoot });
+    console.log('[alertService] alerts.json をGitHubにプッシュしました');
+  } catch (e) {
+    console.warn('[alertService] GitHubへのプッシュに失敗:', e);
+  }
 }
 
 export function addAlert(alert: Omit<Alert, 'id' | 'createdAt'>): Alert {
